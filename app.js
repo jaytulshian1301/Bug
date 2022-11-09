@@ -18,6 +18,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(morgan("tiny"));
 
+function wrapAsync(fun) {
+  return function (req, res, next) {
+    fun(req, res, next).catch((e) => next(e));
+  };
+}
+
 async function checkIfExists(req, res, next) {
   const { email, username } = req.body;
   if (await User.findOne({ $or: [{ username }, { email }] }))
@@ -25,10 +31,18 @@ async function checkIfExists(req, res, next) {
   next();
 }
 
-app.post("/", checkIfExists, async (req, res) => {
-  const newuser = new User(req.body);
-  await newuser.save();
-  res.send("Created");
+app.post(
+  "/",
+  checkIfExists,
+  wrapAsync(async (req, res) => {
+    const newuser = new User(req.body);
+    await newuser.save();
+    res.send("Created");
+  })
+);
+
+app.use((err, req, res, next) => {
+  res.send("Error Message" + err).status(404);
 });
 
 app.listen(4000, (req, res) => {
