@@ -18,18 +18,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(morgan("tiny"));
 
+//###################################################################################################//
+//#######################################  Helper Functions  ########################################//
+//###################################################################################################//
+
+//By wrapping the below function around async functions, this function will make sure to handle all the async errors
+//that could occur within the passed function
 function wrapAsync(fun) {
   return function (req, res, next) {
     fun(req, res, next).catch((e) => next(e));
   };
 }
 
+//Middleware
 async function checkIfExists(req, res, next) {
   const { email, username } = req.body;
   if (await User.findOne({ $or: [{ username }, { email }] }))
     return res.send("Email or Username exists");
   next();
 }
+//###################################################################################################//
+//###################################################################################################//
+//###################################################################################################//
 
 app.post(
   "/",
@@ -41,6 +51,7 @@ app.post(
   })
 );
 
+//Error Handler
 app.use((err, req, res, next) => {
   res.send("Error Message" + err).status(404);
 });

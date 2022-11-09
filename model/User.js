@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+//Middleware to hash the password "Pre Saving" the document
 userSchema.pre("save", async function (next) {
   this.password = await hashPass(this.password);
   next();
